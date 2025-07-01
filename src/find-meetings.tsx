@@ -1,8 +1,12 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast, open, getPreferenceValues } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, showToast, Toast, getPreferenceValues } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { homedir } from "os";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 // Interface for storing meeting information
 interface MeetingInfo {
@@ -14,6 +18,26 @@ interface MeetingInfo {
 // Interface for the extension's preferences
 interface Preferences {
     meetingsFilePath: string;
+}
+
+/**
+ * Opens the Teams link in the desktop client using the Windows 'start' command.
+ * @param url The original https Teams meeting URL.
+ */
+async function openTeamsLink(url: string) {
+    const teamsUrl = url.replace("https://", "msteams://");
+
+    try {
+        // The 'start' command is a reliable way to open custom URL protocols on Windows.
+        // The empty "" argument is a necessary quirk to handle URLs correctly.
+        await execAsync(`start "" "${teamsUrl}"`);
+    } catch (error) {
+        await showToast({
+            style: Toast.Style.Failure,
+            title: "Failed to Open Link",
+            message: `Could not open the Teams link. Please ensure Teams is installed.`,
+        });
+    }
 }
 
 // Fetches meetings from the specified CSV file path.
@@ -93,7 +117,7 @@ export default function Command() {
                                 <Action
                                     title="Join Teams Meeting"
                                     icon={Icon.Video}
-                                    onAction={() => open(meeting.TeamsLink.replace("https://", "msteams://"))}
+                                    onAction={() => openTeamsLink(meeting.TeamsLink)}
                                 />
                                 <Action
                                     title="Reload Meetings"
