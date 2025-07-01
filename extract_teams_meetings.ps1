@@ -1,20 +1,6 @@
-<#
-.SYNOPSIS
-    Retrieves today's Microsoft Teams meetings from the Outlook calendar and exports them to a CSV file.
-
-.PARAMETER OutputPath
-    Specifies the full path for the output CSV file.
-    If not provided, it defaults to "C:\Users\<YourUsername>\todays_meetings.csv".
-
-.EXAMPLE
-    .\Get-TodayTeamsMeetings.ps1
-    (Exports the meeting list to the default path in your user profile)
-
-.EXAMPLE
-    .\Get-TodayTeamsMeetings.ps1 -OutputPath "C:\Temp\MyMeetings.csv"
-    (Exports the meeting list to the specified path)
-#>
-param(
+[CmdletBinding()]
+param (
+    # Defines the full path where the CSV file will be saved.
     [Parameter(Mandatory=$false)]
     [string]$OutputPath = "$env:USERPROFILE\todays_meetings.csv"
 )
@@ -54,24 +40,52 @@ try {
                 # We create a full DateTime object for the check.
                 $occurrenceCheckDate = (Get-Date).Date + $appointment.Start.TimeOfDay
                 $occurrence = $appointment.GetRecurrencePattern().GetOccurrence($occurrenceCheckDate)
-                # If GetOccurrence did not throw an error, an instance exists today.
+                # If it doesn't throw an error, an occurrence exists today. Add it.
+                # Note: We add the specific occurrence, not the master recurring appointment.
                 if ($occurrence) {
-                    $todaysMeetings += $appointment
+                    $todaysMeetings += $occurrence
                 }
             }
             catch {
-                # An error indicates no occurrence for this specific recurring meeting today.
-                # We can safely ignore this error and continue to the next item.
+                # This meeting is a recurring series, but no instance falls on today. Ignore it.
             }
         }
     }
 
-    # (The remainder of your script to process and export $todaysMeetings to the $OutputPath would follow here)
-    # For example:
-    # $todaysMeetings | Select-Object -Property Subject, Start, End | Export-Csv -Path $OutputPath -NoTypeInformation
-    Write-Host "Script finished. Check the output file at: $OutputPath"
+    # --- Process and Export Today's Meetings ---
+    $meetingsOutput = @()
+    $teamsUrlRegex = 'https://teams.microsoft.com/l/meetup-join/[^"'' >]+'
+
+    # Now, loop through the clean list of today's meetings and find the Teams links.
+    foreach ($meeting in $todaysMeetings) {
+        if ($meeting.Body -match $teamsUrlRegex) {
+            $meetingsOutput += [PSCustomObject]@{
+                StartTime = Get-Date $meeting.Start
+                Subject   = $meeting.Subject
+                TeamsLink = $matches[0]
+            }
+        }
+    }
+
+    # Sort the final list and export to CSV with a semicolon delimiter.
+    $meetingsOutput | Sort-Object -Property StartTime | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8 -Delimiter ';'
+    
+    Write-Host "Success: $($meetingsOutput.Count) Teams meetings exported to $OutputPath"
 
 }
 catch {
-    Write-Error "An error occurred: $($_.Exception.Message)"
+    # The "$_" contains the actual error from PowerShell
+    Write-Error "An error occurred: $_"
+    Write-Error "Please ensure Microsoft Outlook is running or can be started."
+}
+finally {
+    # Cleanly release all COM objects to prevent Outlook from staying open in the background.
+    # The $meetingsOutput object is a PowerShell array, not a COM object, so it is not released here.
+    if ($restrictedAppointments) { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($restrictedAppointments) | Out-Null }
+    if ($allAppointments) { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($allAppointments) | Out-Null }
+    if ($calendar) { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($calendar) | Out-Null }
+    if ($namespace) { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($namespace) | Out-Null }
+    if ($outlook) { [System.Runtime.InteropServices.Marshal]::ReleaseComObject($outlook) | Out-Null }
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
 }
