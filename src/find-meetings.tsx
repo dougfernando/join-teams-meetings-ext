@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast, open } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, showToast, Toast, open, getPreferenceValues } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { homedir } from "os";
 import { readFile } from "fs/promises";
@@ -11,10 +11,13 @@ interface MeetingInfo {
     TeamsLink: string;
 }
 
-// Fetches meetings from the todays_meetings.csv file in the home directory.
-async function fetchTodaysMeetings(): Promise<MeetingInfo[]> {
-    const filePath = join(homedir(), "todays_meetings.csv");
+// Interface for the extension's preferences
+interface Preferences {
+    meetingsFilePath: string;
+}
 
+// Fetches meetings from the specified CSV file path.
+async function fetchTodaysMeetings(filePath: string): Promise<MeetingInfo[]> {
     try {
         const fileContent = await readFile(filePath, "utf-8");
 
@@ -35,16 +38,16 @@ async function fetchTodaysMeetings(): Promise<MeetingInfo[]> {
 
         return meetings;
     } catch (error) {
-        // If the file doesn't exist or there's a reading error, return an empty array.
-        // A toast with the error will be shown to the user.
         console.error("Error reading or parsing CSV file:", error);
-        throw new Error("Could not read or find 'todays_meetings.csv' in your home directory.");
+        throw new Error(`Could not read or find the file at: ${filePath}`);
     }
 }
 
 export default function Command() {
     const [meetings, setMeetings] = useState<MeetingInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const preferences = getPreferenceValues<Preferences>();
+    const meetingsFilePath = preferences.meetingsFilePath.replace("~", homedir());
 
     // Function to load or reload the meeting list
     const loadMeetings = async () => {
@@ -55,7 +58,7 @@ export default function Command() {
 
         try {
             setIsLoading(true);
-            const fetchedMeetings = await fetchTodaysMeetings();
+            const fetchedMeetings = await fetchTodaysMeetings(meetingsFilePath);
             setMeetings(fetchedMeetings);
 
             toast.style = Toast.Style.Success;
@@ -90,7 +93,7 @@ export default function Command() {
                                 <Action
                                     title="Join Teams Meeting"
                                     icon={Icon.Video}
-                                    onAction={() => open(meeting.TeamsLink)}
+                                    onAction={() => open(meeting.TeamsLink.replace("https://", "msteams://"))}
                                 />
                                 <Action
                                     title="Reload Meetings"
@@ -108,7 +111,7 @@ export default function Command() {
                     description={
                         isLoading
                             ? "Please wait..."
-                            : "Could not find any meetings in 'todays_meetings.csv'."
+                            : `Could not find any meetings in the specified file.`
                     }
                     icon={Icon.Calendar}
                 />

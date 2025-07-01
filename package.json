@@ -22,12 +22,12 @@
     ],
     "preferences": [
         {
-            "name": "emptyStart",
-            "title": "Should start with empty list?",
-            "description": "Decides if the search should start with an empty list or not",
-            "type": "checkbox",
-            "required": false,
-            "default": false
+            "name": "meetingsFilePath",
+            "title": "Meetings File Path",
+            "description": "The full path to your 'todays_meetings.csv' file. Use ~ for your home directory.",
+            "type": "textfield",
+            "required": true,
+            "default": "~/todays_meetings.csv"
         }
     ],
     "dependencies": {

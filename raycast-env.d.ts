@@ -8,8 +8,8 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
-  /** Should start with empty list? - Decides if the search should start with an empty list or not */
-  "emptyStart": boolean
+  /** Meetings File Path - The full path to your 'todays_meetings.csv' file. Use ~ for your home directory. */
+  "meetingsFilePath": string
 }
 
 /** Preferences accessible in all the extension's commands */
