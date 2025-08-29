@@ -8,13 +8,73 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
+// Meeting status enum
+enum MeetingStatus {
+    Ended = "ended",
+    Active = "active", 
+    Upcoming = "upcoming"
+}
+
+// Function to determine meeting status based on start/end times
+function getMeetingStatus(startDate: Date, endDate?: Date): MeetingStatus {
+    const now = new Date();
+    const fiveMinuteBuffer = 5 * 60 * 1000; // 5 minutes in milliseconds
+    
+    if (endDate && now > endDate) {
+        return MeetingStatus.Ended;
+    }
+    
+    // Consider meeting active if we're within 5 minutes of start time or after start time
+    if (now >= new Date(startDate.getTime() - fiveMinuteBuffer)) {
+        if (endDate) {
+            return now <= endDate ? MeetingStatus.Active : MeetingStatus.Ended;
+        } else {
+            // If no end time, assume meeting is active for 1 hour after start
+            const assumedEndTime = new Date(startDate.getTime() + 60 * 60 * 1000);
+            return now <= assumedEndTime ? MeetingStatus.Active : MeetingStatus.Ended;
+        }
+    }
+    
+    return MeetingStatus.Upcoming;
+}
+
+// Function to get appropriate icon for meeting status
+function getStatusIcon(status: MeetingStatus): Icon {
+    switch (status) {
+        case MeetingStatus.Active:
+            return Icon.CircleFilled;
+        case MeetingStatus.Upcoming:
+            return Icon.Circle;
+        case MeetingStatus.Ended:
+            return Icon.CircleProgress100;
+        default:
+            return Icon.Calendar;
+    }
+}
+
+// Function to get status color/accessory
+function getStatusAccessory(status: MeetingStatus): { icon: Icon; tooltip: string } {
+    switch (status) {
+        case MeetingStatus.Active:
+            return { icon: Icon.CircleFilled, tooltip: "Meeting is active" };
+        case MeetingStatus.Upcoming:
+            return { icon: Icon.Circle, tooltip: "Upcoming meeting" };
+        case MeetingStatus.Ended:
+            return { icon: Icon.CircleProgress100, tooltip: "Meeting has ended" };
+        default:
+            return { icon: Icon.Calendar, tooltip: "Meeting" };
+    }
+}
+
 // Interface for storing meeting information
 interface MeetingInfo {
     StartTime: string;
     Subject: string;
     TeamsLink: string;
     parsedDate: Date;
+    endDate?: Date;
     timeDisplay: string;
+    status: MeetingStatus;
 }
 
 // Interface for grouped meetings by date
@@ -25,6 +85,8 @@ interface GroupedMeetings {
 // Interface for the extension's preferences
 interface Preferences {
     meetingsFilePath: string;
+    powershellScriptPath: string;
+    powershellFunctionName: string;
 }
 
 /**
@@ -43,6 +105,36 @@ async function openTeamsLink(url: string) {
             style: Toast.Style.Failure,
             title: "Failed to Open Link",
             message: `Could not open the Teams link. Please ensure Teams is installed.`,
+        });
+    }
+}
+
+/**
+ * Executes a PowerShell function to refresh the meetings CSV file.
+ * @param scriptPath Path to the PowerShell script
+ * @param functionName Name of the PowerShell function to execute
+ * @param outputPath Path where the CSV should be generated
+ */
+async function refreshMeetingsWithPowerShell(scriptPath: string, functionName: string, outputPath: string) {
+    try {
+        // Expand tilde in script path if present
+        const expandedScriptPath = scriptPath.replace("~", homedir());
+        
+        // Build PowerShell command to source the script and call the function
+        const psCommand = `powershell.exe -ExecutionPolicy Bypass -Command "& { . '${expandedScriptPath}'; ${functionName} -OutputPath '${outputPath}' }"`;
+        
+        await execAsync(psCommand);
+        
+        await showToast({
+            style: Toast.Style.Success,
+            title: "Meetings Refreshed",
+            message: "Successfully updated meetings from PowerShell script",
+        });
+    } catch (error) {
+        await showToast({
+            style: Toast.Style.Failure,
+            title: "PowerShell Refresh Failed",
+            message: error instanceof Error ? error.message : "Failed to execute PowerShell script",
         });
     }
 }
@@ -80,15 +172,22 @@ async function fetchTodaysMeetings(filePath: string): Promise<MeetingInfo[]> {
                 }
                 
                 const isValidDate = !isNaN(parsedDate.getTime());
+                const validParsedDate = isValidDate ? parsedDate : new Date();
+                
+                // Calculate end date (assume 1 hour duration if not provided)
+                // You could extend this to parse end time from CSV if available
+                const endDate = new Date(validParsedDate.getTime() + 60 * 60 * 1000);
                 
                 return {
                     StartTime: parts[0],
                     Subject: parts[1],
                     TeamsLink: parts[2],
-                    parsedDate: isValidDate ? parsedDate : new Date(),
+                    parsedDate: validParsedDate,
+                    endDate,
                     timeDisplay: isValidDate 
                         ? parsedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         : parts[0], // Fallback to original string if date parsing fails
+                    status: getMeetingStatus(validParsedDate, endDate),
                 };
             })
             .filter((m) => m.StartTime && m.Subject && m.TeamsLink) // Remove the date validation that was causing issues
@@ -147,6 +246,30 @@ export default function Command() {
         }
     };
 
+    // Function to refresh meetings using PowerShell script
+    const refreshMeetings = async () => {
+        const toast = await showToast({
+            style: Toast.Style.Animated,
+            title: "Refreshing meetings with PowerShell...",
+        });
+
+        try {
+            // First run the PowerShell script to update the CSV
+            await refreshMeetingsWithPowerShell(
+                preferences.powershellScriptPath, 
+                preferences.powershellFunctionName, 
+                meetingsFilePath
+            );
+            
+            // Then reload the meetings from the updated CSV
+            await loadMeetings();
+        } catch (error) {
+            toast.style = Toast.Style.Failure;
+            toast.title = "Refresh Failed";
+            toast.message = error instanceof Error ? error.message : "Failed to refresh meetings";
+        }
+    };
+
     // useEffect with an empty dependency array runs only once on mount
     useEffect(() => {
         loadMeetings();
@@ -181,7 +304,8 @@ export default function Command() {
                                 key={`${meeting.TeamsLink}-${index}`}
                                 title={meeting.Subject}
                                 subtitle={meeting.timeDisplay}
-                                icon={Icon.Calendar}
+                                icon={getStatusIcon(meeting.status)}
+                                accessories={[getStatusAccessory(meeting.status)]}
                                 actions={
                                     <ActionPanel>
                                         <Action
@@ -208,6 +332,14 @@ export default function Command() {
                                             onAction={loadMeetings}
                                             shortcut={{ modifiers: ["cmd"], key: "r" }}
                                         />
+                                        {preferences.powershellScriptPath && preferences.powershellFunctionName && (
+                                            <Action
+                                                title="Refresh with PowerShell"
+                                                icon={Icon.Terminal}
+                                                onAction={refreshMeetings}
+                                                shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+                                            />
+                                        )}
                                     </ActionPanel>
                                 }
                             />

@@ -9,7 +9,11 @@
 
 type ExtensionPreferences = {
   /** Meetings File Path - The full path to your 'todays_meetings.csv' file. Use ~ for your home directory. */
-  "meetingsFilePath": string
+  "meetingsFilePath": string,
+  /** PowerShell Script Path - Path to the PowerShell script that contains the meeting extraction function. Use ~ for your home directory. */
+  "powershellScriptPath": string,
+  /** PowerShell Function Name - Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TodayTeamsMeetings') */
+  "powershellFunctionName": string
 }
 
 /** Preferences accessible in all the extension's commands */
