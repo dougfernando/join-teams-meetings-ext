@@ -1,8 +1,93 @@
-# Kill processes extension for Raycast for Windows
+# Join Teams Meetings - Raycast Extension for Windows
 
-Based on https://github.com/PuttTim/windows-terminal and https://github.com/dougfernando/everything-raycast-extension
+A powerful Raycast extension for Windows that simplifies joining Microsoft Teams meetings. Browse today's meetings with visual status indicators and join them instantly through the Teams desktop app.
 
-how to install it:
-- install Node JS (winget install -e --id OpenJS.NodeJS)
-- clone the repository
-- run: “npm ci” then “npm run dev”, which adds it to Raycast
+## ✨ Main Features
+
+### 🎯 Quick Meeting Access
+- Browse today's Teams meetings in a clean, organized interface
+- One-click joining through Teams desktop app
+- Date grouping for multi-day meeting views
+- Copy meeting links to clipboard
+
+### 📊 Visual Status Indicators
+- **Active meetings** (🔴): Currently ongoing or starting within 5 minutes
+- **Upcoming meetings** (⚪): Scheduled for later today
+- **Ended meetings** (✅): Past meetings for reference
+
+### 🔄 PowerShell Integration
+- Automated meeting refresh using custom PowerShell scripts
+- Configurable script path and function name
+- Extract meetings directly from Outlook or other sources
+- Seamless CSV generation and updates
+
+### ⌨️ Keyboard Shortcuts
+- `Cmd+R`: Refresh meetings from CSV file
+- `Cmd+Shift+R`: Refresh using PowerShell script (if configured)
+- `Cmd+C`: Copy meeting link to clipboard
+
+### 📁 Flexible Data Sources
+- CSV file support with semicolon delimiters
+- Configurable file path (default: `~/todays_meetings.csv`)
+- Compatible with automated meeting extraction scripts
+
+## 🚀 Installation
+
+### Prerequisites
+- Node.js (install via: `winget install -e --id OpenJS.NodeJS`)
+- Microsoft Teams desktop app
+- Raycast for Windows
+
+### Setup Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/dougfernando/join-teams-meetings-ext.git
+   cd join-teams-meetings-ext
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm ci
+   ```
+
+3. Add to Raycast:
+   ```bash
+   npm run dev
+   ```
+
+## 📋 CSV Format
+
+The extension expects a CSV file with semicolon delimiters:
+```
+StartTime;Subject;TeamsLink
+09:00;Daily Standup;https://teams.microsoft.com/l/meetup-join/...
+14:00;Project Review;https://teams.microsoft.com/l/meetup-join/...
+```
+
+## ⚙️ Configuration
+
+Configure the extension through Raycast preferences:
+
+- **Meetings File Path**: Path to your CSV file (default: `~/todays_meetings.csv`)
+- **PowerShell Script Path**: Path to your meeting extraction script (optional)
+- **PowerShell Function Name**: Function to call for meeting refresh (optional)
+
+## 🛠️ Development
+
+```bash
+# Development mode
+npm run dev
+
+# Build extension
+npm run build
+
+# Lint code
+npm run lint
+
+# Fix lint issues
+npm run fix-lint
+```
+
+## 📜 Based On
+- https://github.com/PuttTim/windows-terminal
+- https://github.com/dougfernando/everything-raycast-extension
