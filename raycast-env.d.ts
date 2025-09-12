@@ -8,11 +8,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
-  /** Meetings File Path - The full path to your 'todays_meetings.csv' file. Use ~ for your home directory. */
+  /** Meetings File Path - The full path to your meetings CSV file. Use ~ for your home directory. */
   "meetingsFilePath": string,
   /** PowerShell Script Path - Path to the PowerShell script that contains the meeting extraction function. Use ~ for your home directory. */
   "powershellScriptPath": string,
-  /** PowerShell Function Name - Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TodayTeamsMeetings') */
+  /** PowerShell Function Name - Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TeamsMeetings') */
   "powershellFunctionName": string
 }
 

@@ -2,11 +2,11 @@
     "$schema": "https://www.raycast.com/schemas/extension.json",
     "name": "join-teams-meetings-ext",
     "title": "Join Teams Meetings",
-    "description": "List today's meeting and select one to join",
+    "description": "List Teams meetings and select one to join",
     "icon": "icon.png",
     "author": "dfs",
     "categories": [
-        "Productivity Tools"
+        "Productivity"
     ],
     "license": "MIT",
     "platforms": [
@@ -15,8 +15,8 @@
     "commands": [
         {
             "name": "find-meetings",
-            "title": "Find today's teams meetings",
-            "description": "List today's meeting and select one to join",
+            "title": "Find Teams Meetings",
+            "description": "List Teams meetings and select one to join",
             "mode": "view"
         }
     ],
@@ -24,10 +24,10 @@
         {
             "name": "meetingsFilePath",
             "title": "Meetings File Path",
-            "description": "The full path to your 'todays_meetings.csv' file. Use ~ for your home directory.",
+            "description": "The full path to your meetings CSV file. Use ~ for your home directory.",
             "type": "textfield",
             "required": true,
-            "default": "~/todays_meetings.csv"
+            "default": "~/meetings.csv"
         },
         {
             "name": "powershellScriptPath",
@@ -40,10 +40,10 @@
         {
             "name": "powershellFunctionName",
             "title": "PowerShell Function Name",
-            "description": "Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TodayTeamsMeetings')",
+            "description": "Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TeamsMeetings')",
             "type": "textfield",
             "required": false,
-            "default": "Get-TodayTeamsMeetings"
+            "default": "Get-TeamsMeetings"
         }
     ],
     "dependencies": {
