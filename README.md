@@ -22,13 +22,6 @@ A powerful Raycast extension for Windows that simplifies joining Microsoft Teams
 - Seamless CSV generation and updates
 
 ### ⌨️ Keyboard Shortcuts
-**macOS:**
-- `Cmd+J`: Join Teams meeting
-- `Cmd+C`: Copy meeting link to clipboard
-- `Cmd+R`: Refresh meetings from CSV file
-- `Cmd+Shift+R`: Refresh using PowerShell script (if configured)
-
-**Windows:**
 - `Ctrl+J`: Join Teams meeting
 - `Ctrl+C`: Copy meeting link to clipboard
 - `Ctrl+R`: Refresh meetings from CSV file
@@ -36,7 +29,7 @@ A powerful Raycast extension for Windows that simplifies joining Microsoft Teams
 
 ### 📁 Flexible Data Sources
 - CSV file support with semicolon delimiters
-- Configurable file path (default: `~/todays_meetings.csv`)
+- Configurable file path (default: `~/meetings.csv`)
 - Compatible with automated meeting extraction scripts
 
 ## 🚀 Installation
@@ -76,7 +69,7 @@ StartTime;Subject;TeamsLink
 
 Configure the extension through Raycast preferences:
 
-- **Meetings File Path**: Path to your CSV file (default: `~/todays_meetings.csv`)
+- **Meetings File Path**: Path to your CSV file (default: `~/meetings.csv`)
 - **PowerShell Script Path**: Path to your meeting extraction script (optional)
 - **PowerShell Function Name**: Function to call for meeting refresh (optional)
 

@@ -11,9 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Filter functionality to hide past meetings via dropdown in main list
 - "Upcoming & Active" filter option to show only non-ended meetings
 - Better empty state messaging when all meetings are filtered out
-- Platform-specific keyboard shortcuts for all actions
-  - macOS: Cmd+J (join), Cmd+C (copy), Cmd+R (reload), Cmd+Shift+R (PowerShell refresh)
-  - Windows: Ctrl+J (join), Ctrl+C (copy), Ctrl+R (reload), Ctrl+Shift+R (PowerShell refresh)
+- Keyboard shortcuts for all actions
+  - Ctrl+J (join), Ctrl+C (copy), Ctrl+R (reload), Ctrl+Shift+R (PowerShell refresh)
 
 ### Changed
 - Moved filter from preferences to main UI dropdown for better UX
