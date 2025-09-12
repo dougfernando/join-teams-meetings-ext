@@ -342,8 +342,8 @@ export default function Command() {
                                             icon={Icon.Video}
                                             onAction={() => openTeamsLink(meeting.TeamsLink)}
                                             shortcut={{
-                                                macOS: { modifiers: ["cmd"], key: "enter" },
-                                                windows: { modifiers: ["ctrl"], key: "enter" },
+                                                macOS: { modifiers: ["cmd"], key: "j" },
+                                                windows: { modifiers: ["ctrl"], key: "j" },
                                             }}
                                         />
                                         <Action
