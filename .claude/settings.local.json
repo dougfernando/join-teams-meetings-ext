@@ -3,7 +3,13 @@
     "allow": [
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run fix-lint)",
+      "WebFetch(domain:developers.raycast.com)",
+      "Bash(npm update:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
