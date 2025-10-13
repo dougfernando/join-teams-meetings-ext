@@ -65,6 +65,26 @@ StartTime;Subject;TeamsLink
 14:00;Project Review;https://teams.microsoft.com/l/meetup-join/...
 ```
 
+### Extracting Meetings from Outlook
+
+The repository includes a PowerShell script (`extract_teams_meetings.ps1`) that can automatically extract Teams meetings from the Outlook classic desktop app:
+
+```powershell
+# Run the script to extract meetings
+. .\extract_teams_meetings.ps1
+extract-meetings
+```
+
+This script will:
+- Connect to your Outlook calendar
+- Extract all Teams meetings for the next 5 days
+- Generate a CSV file at `~/upcoming_meetings.csv`
+- Include meeting start times, subjects, and Teams join links
+
+**Requirements:**
+- Microsoft Outlook desktop app (classic version)
+- PowerShell execution policy allowing script execution
+
 ## ⚙️ Configuration
 
 Configure the extension through Raycast preferences:
