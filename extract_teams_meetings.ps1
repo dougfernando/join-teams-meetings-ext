@@ -1,6 +1,6 @@
 
 function extract-meetings {
-    $OutputPath = "$env:USERPROFILE\upcoming_meetings.csv"
+    $OutputPath = "$env:USERPROFILE\meetings.csv"
 
     try {
         # This requires the Outlook client to be running.

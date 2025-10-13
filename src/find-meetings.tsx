@@ -1,9 +1,20 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast, getPreferenceValues, Clipboard } from "@raycast/api"
+import {
+    Action,
+    ActionPanel,
+    Icon,
+    List,
+    showToast,
+    Toast,
+    getPreferenceValues,
+    Clipboard,
+    environment,
+} from "@raycast/api"
 import { useEffect, useState } from "react"
 import { homedir } from "os"
 import { readFile, stat } from "fs/promises"
 import { exec } from "child_process"
 import { promisify } from "util"
+import { join } from "path"
 
 const execAsync = promisify(exec)
 
@@ -133,17 +144,26 @@ async function openTeamsLink(url: string) {
 
 /**
  * Executes a PowerShell function to refresh the meetings CSV file.
- * @param scriptPath Path to the PowerShell script
- * @param functionName Name of the PowerShell function to execute
- * @param outputPath Path where the CSV should be generated
+ * @param scriptPath Path to the PowerShell script (if empty, uses bundled script)
+ * @param functionName Name of the PowerShell function to execute (if empty, uses 'extract-meetings')
  */
-async function refreshMeetingsWithPowerShell(scriptPath: string, functionName: string, outputPath: string) {
+async function refreshMeetingsWithPowerShell(scriptPath: string, functionName: string) {
     try {
-        // Expand tilde in script path if present
-        const expandedScriptPath = scriptPath.replace("~", homedir())
+        // Use bundled script if no custom path provided
+        let expandedScriptPath: string
+        if (!scriptPath || scriptPath.trim() === "") {
+            // Use the bundled script from the extension's assets directory
+            expandedScriptPath = join(environment.assetsPath, "..", "extract_teams_meetings.ps1")
+        } else {
+            // Expand tilde in custom script path if present
+            expandedScriptPath = scriptPath.replace("~", homedir())
+        }
+
+        // Use default function name if not provided
+        const actualFunctionName = !functionName || functionName.trim() === "" ? "extract-meetings" : functionName
 
         // Build PowerShell command to source the script and call the function
-        const psCommand = `powershell.exe -ExecutionPolicy Bypass -Command "& { . '${expandedScriptPath}'; ${functionName} -OutputPath '${outputPath}' }"`
+        const psCommand = `powershell.exe -ExecutionPolicy Bypass -Command "& { . '${expandedScriptPath}'; ${actualFunctionName} }"`
 
         await execAsync(psCommand)
 
@@ -265,7 +285,7 @@ export default function Command() {
             setIsLoading(true)
 
             // Check if file is older than 24 hours and auto-refresh if needed
-            if (!skipAgeCheck && preferences.powershellScriptPath && preferences.powershellFunctionName) {
+            if (!skipAgeCheck) {
                 const isOld = await isFileOlderThan24Hours(meetingsFilePath)
                 if (isOld) {
                     toast.title = "File is outdated, refreshing..."
@@ -273,9 +293,8 @@ export default function Command() {
 
                     try {
                         await refreshMeetingsWithPowerShell(
-                            preferences.powershellScriptPath,
-                            preferences.powershellFunctionName,
-                            meetingsFilePath,
+                            preferences.powershellScriptPath || "",
+                            preferences.powershellFunctionName || "",
                         )
 
                         await showToast({
@@ -319,9 +338,8 @@ export default function Command() {
         try {
             // First run the PowerShell script to update the CSV
             await refreshMeetingsWithPowerShell(
-                preferences.powershellScriptPath,
-                preferences.powershellFunctionName,
-                meetingsFilePath,
+                preferences.powershellScriptPath || "",
+                preferences.powershellFunctionName || "",
             )
 
             // Then reload the meetings from the updated CSV (skip age check since we just refreshed)
@@ -418,17 +436,15 @@ export default function Command() {
                                                 windows: { modifiers: ["ctrl"], key: "r" },
                                             }}
                                         />
-                                        {preferences.powershellScriptPath && preferences.powershellFunctionName && (
-                                            <Action
-                                                title="Refresh with Powershell"
-                                                icon={Icon.Terminal}
-                                                onAction={refreshMeetings}
-                                                shortcut={{
-                                                    macOS: { modifiers: ["cmd", "shift"], key: "r" },
-                                                    windows: { modifiers: ["ctrl", "shift"], key: "r" },
-                                                }}
-                                            />
-                                        )}
+                                        <Action
+                                            title="Refresh with Powershell"
+                                            icon={Icon.Terminal}
+                                            onAction={refreshMeetings}
+                                            shortcut={{
+                                                macOS: { modifiers: ["cmd", "shift"], key: "r" },
+                                                windows: { modifiers: ["ctrl", "shift"], key: "r" },
+                                            }}
+                                        />
                                     </ActionPanel>
                                 }
                             />

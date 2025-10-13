@@ -31,19 +31,19 @@
         },
         {
             "name": "powershellScriptPath",
-            "title": "PowerShell Script Path",
-            "description": "Path to the PowerShell script that contains the meeting extraction function. Use ~ for your home directory.",
+            "title": "PowerShell Script Path (Optional)",
+            "description": "Path to a custom PowerShell script. Leave empty to use the bundled script. Use ~ for your home directory.",
             "type": "textfield",
             "required": false,
-            "default": "~/extract_teams_meetings.ps1"
+            "default": ""
         },
         {
             "name": "powershellFunctionName",
-            "title": "PowerShell Function Name",
-            "description": "Name of the PowerShell function to call for refreshing meetings (e.g., 'Get-TeamsMeetings')",
+            "title": "PowerShell Function Name (Optional)",
+            "description": "Name of the PowerShell function to call. Leave empty to use 'extract-meetings' (bundled script default).",
             "type": "textfield",
             "required": false,
-            "default": "Get-TeamsMeetings"
+            "default": ""
         }
     ],
     "dependencies": {
