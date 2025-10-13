@@ -111,9 +111,9 @@ interface GroupedMeetings {
 
 // Interface for the extension's preferences
 interface Preferences {
-    meetingsFilePath: string
-    powershellScriptPath: string
-    powershellFunctionName: string
+    meetingsFilePath?: string
+    powershellScriptPath?: string
+    powershellFunctionName?: string
 }
 
 // Filter options for meetings
@@ -253,7 +253,9 @@ export default function Command() {
     const [isLoading, setIsLoading] = useState(true)
     const [filter, setFilter] = useState<FilterOption>(FilterOption.All)
     const preferences = getPreferenceValues<Preferences>()
-    const meetingsFilePath = preferences.meetingsFilePath.replace("~", homedir())
+    // Use default path if preference is not set
+    const defaultMeetingsPath = join(homedir(), "meetings.csv")
+    const meetingsFilePath = (preferences.meetingsFilePath || defaultMeetingsPath).replace("~", homedir())
 
     // Filter meetings based on dropdown selection
     const filteredMeetings =

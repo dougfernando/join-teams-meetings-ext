@@ -24,9 +24,9 @@
         {
             "name": "meetingsFilePath",
             "title": "Meetings File Path",
-            "description": "The full path to your meetings CSV file. Use ~ for your home directory.",
+            "description": "Path to your meetings CSV file. Use ~ for your home directory. Default works with bundled PowerShell script.",
             "type": "textfield",
-            "required": true,
+            "required": false,
             "default": "~/meetings.csv"
         },
         {

@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 
 type ExtensionPreferences = {
-  /** Meetings File Path - The full path to your meetings CSV file. Use ~ for your home directory. */
+  /** Meetings File Path - Path to your meetings CSV file. Use ~ for your home directory. Default works with bundled PowerShell script. */
   "meetingsFilePath": string,
   /** PowerShell Script Path (Optional) - Path to a custom PowerShell script. Leave empty to use the bundled script. Use ~ for your home directory. */
   "powershellScriptPath": string,
