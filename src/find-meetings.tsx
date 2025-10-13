@@ -1,11 +1,28 @@
 import { Action, ActionPanel, Icon, List, showToast, Toast, getPreferenceValues, Clipboard } from "@raycast/api"
 import { useEffect, useState } from "react"
 import { homedir } from "os"
-import { readFile } from "fs/promises"
+import { readFile, stat } from "fs/promises"
 import { exec } from "child_process"
 import { promisify } from "util"
 
 const execAsync = promisify(exec)
+
+/**
+ * Checks if a file is older than 24 hours
+ * @param filePath Path to the file to check
+ * @returns Promise<boolean> True if file is older than 24 hours or doesn't exist
+ */
+async function isFileOlderThan24Hours(filePath: string): Promise<boolean> {
+    try {
+        const stats = await stat(filePath)
+        const fileAge = Date.now() - stats.mtime.getTime()
+        const twentyFourHours = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+        return fileAge > twentyFourHours
+    } catch (error) {
+        // If file doesn't exist or can't be accessed, consider it "old"
+        return true
+    }
+}
 
 // Meeting status enum
 enum MeetingStatus {
@@ -238,7 +255,7 @@ export default function Command() {
     const sortedDateKeys = Object.keys(groupedMeetings).sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
 
     // Function to load or reload the meeting list
-    const loadMeetings = async () => {
+    const loadMeetings = async (skipAgeCheck = false) => {
         const toast = await showToast({
             style: Toast.Style.Animated,
             title: "Loading meetings...",
@@ -246,6 +263,36 @@ export default function Command() {
 
         try {
             setIsLoading(true)
+
+            // Check if file is older than 24 hours and auto-refresh if needed
+            if (!skipAgeCheck && preferences.powershellScriptPath && preferences.powershellFunctionName) {
+                const isOld = await isFileOlderThan24Hours(meetingsFilePath)
+                if (isOld) {
+                    toast.title = "File is outdated, refreshing..."
+                    toast.message = "Meetings file is older than 24 hours, updating automatically"
+
+                    try {
+                        await refreshMeetingsWithPowerShell(
+                            preferences.powershellScriptPath,
+                            preferences.powershellFunctionName,
+                            meetingsFilePath,
+                        )
+
+                        await showToast({
+                            style: Toast.Style.Success,
+                            title: "File Updated",
+                            message: "Meetings file has been automatically refreshed",
+                        })
+                    } catch (refreshError) {
+                        await showToast({
+                            style: Toast.Style.Failure,
+                            title: "Auto-refresh Failed",
+                            message: "Could not auto-refresh meetings file, loading existing file",
+                        })
+                    }
+                }
+            }
+
             const fetchedMeetings = await fetchMeetings(meetingsFilePath)
             setMeetings(fetchedMeetings)
 
@@ -277,8 +324,8 @@ export default function Command() {
                 meetingsFilePath,
             )
 
-            // Then reload the meetings from the updated CSV
-            await loadMeetings()
+            // Then reload the meetings from the updated CSV (skip age check since we just refreshed)
+            await loadMeetings(true)
         } catch (error) {
             toast.style = Toast.Style.Failure
             toast.title = "Refresh Failed"
@@ -365,7 +412,7 @@ export default function Command() {
                                         <Action
                                             title="Reload Meetings"
                                             icon={Icon.Repeat}
-                                            onAction={loadMeetings}
+                                            onAction={() => loadMeetings(true)}
                                             shortcut={{
                                                 macOS: { modifiers: ["cmd"], key: "r" },
                                                 windows: { modifiers: ["ctrl"], key: "r" },

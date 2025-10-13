@@ -1,2 +1,6 @@
 node_modules/
 .claude/
+claude-*.log
+claude-session-*
+.claude-history
+claude_code_cache/

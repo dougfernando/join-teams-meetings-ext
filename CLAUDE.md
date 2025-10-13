@@ -62,3 +62,22 @@ The extension has one configurable preference:
 
 - Windows only (uses Windows start command)
 - Microsoft Teams desktop app recommended for best experience
+
+## Claude Code Integration
+
+This project is optimized for use with Claude Code (claude.ai/code). Key considerations:
+
+### Development Workflow
+- Use `npm run lint` and `npm run fix-lint` for code quality checks
+- Run `npm run dev` to test changes in Raycast during development
+- Build with `npm run build` before publishing
+
+### Code Style
+- Follow existing TypeScript/React patterns in the codebase
+- Use Raycast API conventions for extension development
+- Maintain semicolon-delimited CSV parsing format for data consistency
+
+### File Structure
+- Main logic in `src/find-meetings.tsx`
+- Extension configuration in `package.json`
+- Claude-specific files in `.claude/` directory (ignored by git)
