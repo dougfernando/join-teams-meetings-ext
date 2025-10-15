@@ -69,27 +69,27 @@ function getMeetingStatus(startDate: Date, endDate?: Date): MeetingStatus {
 function getStatusIcon(status: MeetingStatus): Icon {
     switch (status) {
         case MeetingStatus.Active:
-            return Icon.CircleFilled
+            return Icon.Video
         case MeetingStatus.Upcoming:
-            return Icon.Circle
+            return Icon.Calendar
         case MeetingStatus.Ended:
-            return Icon.CircleProgress100
+            return Icon.CheckCircle
         default:
             return Icon.Calendar
     }
 }
 
-// Function to get status color/accessory
-function getStatusAccessory(status: MeetingStatus): { icon: Icon; tooltip: string } {
+// Function to get status text/accessory
+function getStatusAccessory(status: MeetingStatus): { text: string; tooltip: string } {
     switch (status) {
         case MeetingStatus.Active:
-            return { icon: Icon.CircleFilled, tooltip: "Meeting is active" }
+            return { text: "Active", tooltip: "Meeting is active" }
         case MeetingStatus.Upcoming:
-            return { icon: Icon.Circle, tooltip: "Upcoming meeting" }
+            return { text: "Upcoming", tooltip: "Upcoming meeting" }
         case MeetingStatus.Ended:
-            return { icon: Icon.CircleProgress100, tooltip: "Meeting has ended" }
+            return { text: "Done", tooltip: "Meeting has ended" }
         default:
-            return { icon: Icon.Calendar, tooltip: "Meeting" }
+            return { text: "Meeting", tooltip: "Meeting" }
     }
 }
 
