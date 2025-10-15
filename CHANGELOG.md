@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Improved visual status indicators with more intuitive icons:
+  - Active meetings now use Video icon instead of filled circle
+  - Upcoming meetings now use Calendar icon instead of clock
+  - Ended meetings now use CheckCircle icon instead of progress circle
+- Changed status accessories from duplicate icons to text labels ("Active", "Upcoming", "Done")
+- Enhanced visual clarity by removing icon duplication in the UI
+
+## [Previous Updates]
+
 ### Added
 - Filter functionality to hide past meetings via dropdown in main list
 - "Upcoming & Active" filter option to show only non-ended meetings

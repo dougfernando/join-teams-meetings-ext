@@ -11,9 +11,9 @@ A powerful Raycast extension for Windows that simplifies joining Microsoft Teams
 - Copy meeting links to clipboard
 
 ### 📊 Visual Status Indicators
-- **Active meetings** (🔴): Currently ongoing or starting within 5 minutes
-- **Upcoming meetings** (⚪): Scheduled for later today
-- **Ended meetings** (✅): Past meetings for reference
+- **Active meetings** (🎥): Currently ongoing or starting within 5 minutes - displayed with Video icon and "Active" label
+- **Upcoming meetings** (📅): Scheduled for later - displayed with Calendar icon and "Upcoming" label
+- **Ended meetings** (✅): Past meetings for reference - displayed with CheckCircle icon and "Done" label
 
 ### 🔄 PowerShell Integration
 - Automated meeting refresh using custom PowerShell scripts
