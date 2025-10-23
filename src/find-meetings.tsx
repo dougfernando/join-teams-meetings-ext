@@ -11,12 +11,27 @@ import {
 } from "@raycast/api"
 import { useEffect, useState } from "react"
 import { homedir } from "os"
-import { readFile, stat } from "fs/promises"
+import { readFile, stat, access } from "fs/promises"
 import { exec } from "child_process"
+import { constants } from "fs"
 import { promisify } from "util"
 import { join } from "path"
 
 const execAsync = promisify(exec)
+
+/**
+ * Checks if a file exists
+ * @param filePath Path to the file to check
+ * @returns Promise<boolean> True if file exists and is accessible
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+    try {
+        await access(filePath, constants.F_OK)
+        return true
+    } catch {
+        return false
+    }
+}
 
 /**
  * Checks if a file is older than 24 hours
@@ -148,37 +163,62 @@ async function openTeamsLink(url: string) {
  * @param functionName Name of the PowerShell function to execute (if empty, uses 'extract-meetings')
  */
 async function refreshMeetingsWithPowerShell(scriptPath: string, functionName: string) {
-    try {
-        // Use bundled script if no custom path provided
-        let expandedScriptPath: string
-        if (!scriptPath || scriptPath.trim() === "") {
-            // Use the bundled script from the extension's assets directory
-            expandedScriptPath = join(environment.assetsPath, "..", "extract_teams_meetings.ps1")
-        } else {
-            // Expand tilde in custom script path if present
-            expandedScriptPath = scriptPath.replace("~", homedir())
+    // Use bundled script if no custom path provided
+    let expandedScriptPath: string
+    if (!scriptPath || scriptPath.trim() === "") {
+        // Try multiple locations for the bundled script
+        const possiblePaths = [
+            join(environment.assetsPath, "extract_teams_meetings.ps1"),
+            join(environment.assetsPath, "..", "extract_teams_meetings.ps1"),
+            join(environment.assetsPath, "..", "..", "extract_teams_meetings.ps1"),
+        ]
+
+        console.log("Looking for bundled PowerShell script in:", possiblePaths)
+
+        // Check which path exists
+        let foundPath: string | null = null
+        for (const path of possiblePaths) {
+            if (await fileExists(path)) {
+                foundPath = path
+                console.log("Found bundled script at:", path)
+                break
+            }
         }
 
-        // Use default function name if not provided
-        const actualFunctionName = !functionName || functionName.trim() === "" ? "extract-meetings" : functionName
+        if (!foundPath) {
+            const errorMsg = `Bundled PowerShell script not found. Searched in: ${possiblePaths.join(", ")}`
+            console.error(errorMsg)
+            throw new Error(errorMsg)
+        }
 
-        // Build PowerShell command to source the script and call the function
-        const psCommand = `powershell.exe -ExecutionPolicy Bypass -Command "& { . '${expandedScriptPath}'; ${actualFunctionName} }"`
-
-        await execAsync(psCommand)
-
-        await showToast({
-            style: Toast.Style.Success,
-            title: "Meetings Refreshed",
-            message: "Successfully updated meetings from PowerShell script",
-        })
-    } catch (error) {
-        await showToast({
-            style: Toast.Style.Failure,
-            title: "PowerShell Refresh Failed",
-            message: error instanceof Error ? error.message : "Failed to execute PowerShell script",
-        })
+        expandedScriptPath = foundPath
+    } else {
+        // Expand tilde in custom script path if present
+        expandedScriptPath = scriptPath.replace("~", homedir())
     }
+
+    // Use default function name if not provided
+    const actualFunctionName = !functionName || functionName.trim() === "" ? "extract-meetings" : functionName
+
+    // Build PowerShell command to source the script and call the function
+    const psCommand = `powershell.exe -ExecutionPolicy Bypass -Command "& { . '${expandedScriptPath}'; ${actualFunctionName} }"`
+
+    console.log("Executing PowerShell command:", psCommand)
+    console.log("Script path:", expandedScriptPath)
+    console.log("Function name:", actualFunctionName)
+
+    const { stdout, stderr } = await execAsync(psCommand)
+
+    console.log("PowerShell stdout:", stdout)
+    if (stderr) {
+        console.error("PowerShell stderr:", stderr)
+    }
+
+    await showToast({
+        style: Toast.Style.Success,
+        title: "Meetings Refreshed",
+        message: "Successfully updated meetings from PowerShell script",
+    })
 }
 
 // Fetches meetings from the specified CSV file path.
@@ -286,6 +326,49 @@ export default function Command() {
         try {
             setIsLoading(true)
 
+            // Check if file exists first
+            const exists = await fileExists(meetingsFilePath)
+            if (!exists) {
+                toast.title = "Meetings file not found"
+                toast.message = "Creating meetings file with PowerShell script..."
+                console.log("Meetings file not found at:", meetingsFilePath)
+
+                try {
+                    await refreshMeetingsWithPowerShell(
+                        preferences.powershellScriptPath || "",
+                        preferences.powershellFunctionName || "",
+                    )
+
+                    // Verify the file was actually created
+                    const fileCreated = await fileExists(meetingsFilePath)
+                    if (!fileCreated) {
+                        const errorMsg = `PowerShell script completed but file was not created at: ${meetingsFilePath}`
+                        console.error(errorMsg)
+                        toast.style = Toast.Style.Failure
+                        toast.title = "Failed to Create Meetings File"
+                        toast.message = errorMsg
+                        setMeetings([])
+                        setIsLoading(false)
+                        return
+                    }
+
+                    console.log("Meetings file successfully created")
+                    toast.style = Toast.Style.Success
+                    toast.title = "Meetings File Created"
+                    toast.message = "Successfully created meetings file"
+                } catch (refreshError) {
+                    const errorMsg = refreshError instanceof Error ? refreshError.message : "Unknown error"
+                    console.error("PowerShell script execution failed:", errorMsg)
+                    console.error("Full error:", refreshError)
+                    toast.style = Toast.Style.Failure
+                    toast.title = "PowerShell Script Failed"
+                    toast.message = errorMsg
+                    setMeetings([])
+                    setIsLoading(false)
+                    return
+                }
+            }
+
             // Check if file is older than 24 hours and auto-refresh if needed
             if (!skipAgeCheck) {
                 const isOld = await isFileOlderThan24Hours(meetingsFilePath)
@@ -312,6 +395,19 @@ export default function Command() {
                         })
                     }
                 }
+            }
+
+            // Final check to ensure file exists before fetching
+            const fileStillExists = await fileExists(meetingsFilePath)
+            if (!fileStillExists) {
+                const errorMsg = `File does not exist at: ${meetingsFilePath}`
+                console.error(errorMsg)
+                toast.style = Toast.Style.Failure
+                toast.title = "Meetings File Not Found"
+                toast.message = errorMsg
+                setMeetings([])
+                setIsLoading(false)
+                return
             }
 
             const fetchedMeetings = await fetchMeetings(meetingsFilePath)
@@ -461,9 +557,33 @@ export default function Command() {
                             ? "Please wait..."
                             : filter === FilterOption.UpcomingAndActive && meetings.length > 0
                               ? "All meetings have ended. Change filter to 'All Meetings' to see them."
-                              : `Could not find any meetings in the specified file.`
+                              : "No meetings found for today. The extension will automatically check for new meetings."
                     }
                     icon={Icon.Calendar}
+                    actions={
+                        !isLoading && (
+                            <ActionPanel>
+                                <Action
+                                    title="Refresh with Powershell"
+                                    icon={Icon.Terminal}
+                                    onAction={refreshMeetings}
+                                    shortcut={{
+                                        macOS: { modifiers: ["cmd", "shift"], key: "r" },
+                                        windows: { modifiers: ["ctrl", "shift"], key: "r" },
+                                    }}
+                                />
+                                <Action
+                                    title="Reload Meetings"
+                                    icon={Icon.Repeat}
+                                    onAction={() => loadMeetings(true)}
+                                    shortcut={{
+                                        macOS: { modifiers: ["cmd"], key: "r" },
+                                        windows: { modifiers: ["ctrl"], key: "r" },
+                                    }}
+                                />
+                            </ActionPanel>
+                        )
+                    }
                 />
             )}
         </List>
