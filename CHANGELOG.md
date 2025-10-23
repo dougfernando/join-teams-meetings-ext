@@ -7,13 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Automatic meetings file creation when file doesn't exist
+- Actions in empty list view (refresh and reload)
+- Multiple search paths for bundled PowerShell script
+- File existence validation before reading meetings
+
 ### Changed
+- Updated extension icon with custom design
 - Improved visual status indicators with more intuitive icons:
   - Active meetings now use Video icon instead of filled circle
   - Upcoming meetings now use Calendar icon instead of clock
   - Ended meetings now use CheckCircle icon instead of progress circle
 - Changed status accessories from duplicate icons to text labels ("Active", "Upcoming", "Done")
 - Enhanced visual clarity by removing icon duplication in the UI
+- Improved error handling and logging for PowerShell script execution
+
+### Fixed
+- Fixed crash when meetings file doesn't exist
+- Fixed bundled PowerShell script not being found in some configurations
+- Better error messages when file operations fail
 
 ## [Previous Updates]
 
