@@ -44,6 +44,14 @@
             "type": "textfield",
             "required": false,
             "default": ""
+        },
+        {
+            "name": "autoRefreshHours",
+            "title": "Auto-Refresh Time (Hours)",
+            "description": "Automatically refresh meetings file if older than this many hours. Set to 0 to disable auto-refresh.",
+            "type": "textfield",
+            "required": false,
+            "default": "24"
         }
     ],
     "dependencies": {

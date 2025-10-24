@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Configurable auto-refresh interval (new "Auto-Refresh Time (Hours)" preference)
+  - Set custom time threshold for automatic file refresh (default: 24 hours)
+  - Option to disable auto-refresh by setting to 0
 - Automatic meetings file creation when file doesn't exist
 - Actions in empty list view (refresh and reload)
 - Multiple search paths for bundled PowerShell script
