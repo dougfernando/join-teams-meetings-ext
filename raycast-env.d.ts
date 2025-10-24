@@ -13,7 +13,9 @@ type ExtensionPreferences = {
   /** PowerShell Script Path (Optional) - Path to a custom PowerShell script. Leave empty to use the bundled script. Use ~ for your home directory. */
   "powershellScriptPath": string,
   /** PowerShell Function Name (Optional) - Name of the PowerShell function to call. Leave empty to use 'extract-meetings' (bundled script default). */
-  "powershellFunctionName": string
+  "powershellFunctionName": string,
+  /** Auto-Refresh Time (Hours) - Automatically refresh meetings file if older than this many hours. Set to 0 to disable auto-refresh. */
+  "autoRefreshHours": string
 }
 
 /** Preferences accessible in all the extension's commands */

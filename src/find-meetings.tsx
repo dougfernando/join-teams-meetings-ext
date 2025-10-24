@@ -34,16 +34,22 @@ async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Checks if a file is older than 24 hours
+ * Checks if a file is older than the specified number of hours
  * @param filePath Path to the file to check
- * @returns Promise<boolean> True if file is older than 24 hours or doesn't exist
+ * @param hours Number of hours to check against (0 disables check)
+ * @returns Promise<boolean> True if file is older than specified hours or doesn't exist
  */
-async function isFileOlderThan24Hours(filePath: string): Promise<boolean> {
+async function isFileOlderThanHours(filePath: string, hours: number): Promise<boolean> {
+    // If hours is 0 or negative, auto-refresh is disabled
+    if (hours <= 0) {
+        return false
+    }
+
     try {
         const stats = await stat(filePath)
         const fileAge = Date.now() - stats.mtime.getTime()
-        const twentyFourHours = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
-        return fileAge > twentyFourHours
+        const thresholdMs = hours * 60 * 60 * 1000 // Convert hours to milliseconds
+        return fileAge > thresholdMs
     } catch (error) {
         // If file doesn't exist or can't be accessed, consider it "old"
         return true
@@ -129,6 +135,7 @@ interface Preferences {
     meetingsFilePath?: string
     powershellScriptPath?: string
     powershellFunctionName?: string
+    autoRefreshHours?: string
 }
 
 // Filter options for meetings
@@ -296,6 +303,8 @@ export default function Command() {
     // Use default path if preference is not set
     const defaultMeetingsPath = join(homedir(), "meetings.csv")
     const meetingsFilePath = (preferences.meetingsFilePath || defaultMeetingsPath).replace("~", homedir())
+    // Parse auto-refresh hours (default to 24 if not set or invalid)
+    const autoRefreshHours = parseInt(preferences.autoRefreshHours || "24", 10) || 24
 
     // Filter meetings based on dropdown selection
     const filteredMeetings =
@@ -369,12 +378,12 @@ export default function Command() {
                 }
             }
 
-            // Check if file is older than 24 hours and auto-refresh if needed
+            // Check if file is older than configured hours and auto-refresh if needed
             if (!skipAgeCheck) {
-                const isOld = await isFileOlderThan24Hours(meetingsFilePath)
+                const isOld = await isFileOlderThanHours(meetingsFilePath, autoRefreshHours)
                 if (isOld) {
                     toast.title = "File is outdated, refreshing..."
-                    toast.message = "Meetings file is older than 24 hours, updating automatically"
+                    toast.message = `Meetings file is older than ${autoRefreshHours} hours, updating automatically`
 
                     try {
                         await refreshMeetingsWithPowerShell(
