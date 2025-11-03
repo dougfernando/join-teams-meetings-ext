@@ -4,13 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Raycast extension for Windows that allows users to join Microsoft Teams meetings. The extension reads today's Teams meetings from a CSV file and provides a quick way to join them through Raycast's interface.
+This is a Raycast extension for Windows that allows users to join Microsoft Teams meetings. The extension reads upcoming Teams meetings (next 5 days) from a CSV file and provides a quick way to join them through Raycast's interface.
+
+## Key Features
+
+- **Visual Status Indicators**: Meetings display with intuitive icons based on status:
+  - 🎥 Active (Icon.Video): Currently ongoing or starting within 5 minutes - displays "Active" label
+  - 📅 Upcoming (Icon.Calendar): Scheduled for later - displays "Upcoming" label
+  - ✅ Ended (Icon.CheckCircle): Past meetings - displays "Done" label
+- **Auto-Refresh**: Automatically refreshes meetings file if older than configured hours
+- **PowerShell Integration**: Includes bundled script to extract meetings from Outlook
+- **Date Grouping**: Groups meetings by date with "Today", "Tomorrow", and date sections
+- **Filter Dropdown**: "All Meetings" or "Upcoming & Active" to hide ended meetings
+- **Keyboard Shortcuts**: Ctrl+J (join), Ctrl+C (copy), Ctrl+R (reload), Ctrl+Shift+R (refresh with PowerShell)
 
 ## Key Architecture Components
 
 - **Raycast Extension**: Built with TypeScript/React using Raycast API
 - **Data Source**: CSV file with semicolon delimiters (`StartTime;Subject;TeamsLink`)
 - **Teams Integration**: Converts https URLs to msteams:// protocol for desktop app launching
+- **PowerShell Automation**: Bundled script (`extract_teams_meetings.ps1`) extracts meetings from Outlook for next 5 days
 
 ## Development Commands
 
@@ -55,8 +68,11 @@ The extension expects a CSV file with semicolon delimiters containing:
 
 ## Preferences
 
-The extension has one configurable preference:
-- `meetingsFilePath`: Path to the CSV file containing meeting data (default: `~/todays_meetings.csv`)
+The extension has four configurable preferences:
+- `meetingsFilePath`: Path to the CSV file containing meeting data (default: `~/meetings.csv`)
+- `powershellScriptPath`: Path to a custom PowerShell script (optional, uses bundled script if empty)
+- `powershellFunctionName`: Name of the PowerShell function to call (optional, defaults to 'extract-meetings')
+- `autoRefreshHours`: Automatically refresh meetings file if older than this many hours (default: 24, set to 0 to disable)
 
 ## Platform Requirements
 
@@ -80,4 +96,13 @@ This project is optimized for use with Claude Code (claude.ai/code). Key conside
 ### File Structure
 - Main logic in `src/find-meetings.tsx`
 - Extension configuration in `package.json`
+- PowerShell script in `assets/extract_teams_meetings.ps1`
 - Claude-specific files in `.claude/` directory (ignored by git)
+
+## Original Repository
+
+This extension is based on: **https://github.com/dougfernando/join-teams-meetings-ext**
+
+Referenced projects:
+- https://github.com/PuttTim/windows-terminal
+- https://github.com/dougfernando/everything-raycast-extension
